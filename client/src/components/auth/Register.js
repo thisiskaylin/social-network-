@@ -1,10 +1,11 @@
 import React, { Fragment, useState } from 'react';
 import { connect } from 'react-redux'; //work with redux
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { setAlert } from '../../actions/alert';
+import { register } from '../../actions/auth';
 import PropTypes from 'prop-types'; //hotket impt
 
-const Register = ({ setAlert }) => { //setalert action
+const Register = ({ setAlert, register, isAuthenticated }) => { //setalert action
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -22,9 +23,14 @@ const Register = ({ setAlert }) => { //setalert action
       //pass this in as message to our action/alert.js
       setAlert('Password do not match', 'danger'); 
     } else {
-      console.log('SUCCESS');
+      //we can access these because we are pulling the components out from the form data
+      register({ name, email, password}); 
     }
   };
+
+  if(isAuthenticated) {
+    return <Navigate to='/dashboard' />
+  }
   
   return <Fragment>
     <section className='container'>
@@ -40,7 +46,8 @@ const Register = ({ setAlert }) => { //setalert action
             name="name" 
             value={name} 
             onChange={onChange}
-            required />
+            //required 
+            />
         </div>
         <div className="form-group">
           <input 
@@ -49,7 +56,8 @@ const Register = ({ setAlert }) => { //setalert action
             name="email" 
             value={email} 
             onChange={onChange}
-            required/>
+            //required
+            />
           <small className="form-text">
             This site uses Gravatar so if you want a profile image, use a
             Gravatar email
@@ -62,7 +70,7 @@ const Register = ({ setAlert }) => { //setalert action
             name="password"
             value={password} 
             onChange={onChange}
-            minLength="6"
+            //minLength="6"
           />
         </div>
         <div className="form-group">
@@ -72,7 +80,7 @@ const Register = ({ setAlert }) => { //setalert action
             name="password2"
             value={password2} 
             onChange={onChange}
-            minLength="6"
+            //minLength="6"
           />
         </div>
         <input type="submit" className="btn btn-primary" value="Register" />
@@ -85,9 +93,15 @@ const Register = ({ setAlert }) => { //setalert action
 };
 
 Register.propTypes = {
-  setAlert: PropTypes.func.isRequired
+  setAlert: PropTypes.func.isRequired,
+  register: PropTypes.func.isRequired,
+  isAuthenticated: PropTypes.bool
 };
+
+const mapStateToProps = state => ({
+  isAuthenticated: state.auth.isAuthenticated
+});
 
 //connect takes two things, first is the state you want to map,
 //second is object with any action you want to use, which allows us to use props
-export default connect(null, { setAlert })(Register);
+export default connect(mapStateToProps, { setAlert, register })(Register);
