@@ -1,18 +1,18 @@
 const express = require('express');//start an express server 
 const connectDB = require('./config/db'); //initiate
 const path = require('path'); //manipulate file path
-const bodyParser = require('body-parser'); //for image 
 
 const app = express(); //take our app variable and set to express
 
 connectDB(); //connect Database
 
-//Init Middleware ->res.body in uses.js
-app.use(express.json({ extended: false}));
-
 //get request to response to res.sent, sent data to brower
 //need to remove before deploy
 // app.get('/', (req, res) => res.send('API Running'));
+
+//Init Middleware ->res.body in uses.js
+app.use(express.json({limit: '50mb'}));
+app.use(express.urlencoded({limit: '50mb'}));
 
 //Define Routes
 //the first / is used to ditinguish the / pretianie to the get(/)

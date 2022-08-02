@@ -1,93 +1,99 @@
 //registering users and handeling users
 const express = require('express');
 const router = express.Router();
+//express validator
+const { check, validationResult } = require('express-validator');
 const gravatar = require('gravatar');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const config = require('config');
-//express validator
-const { check, validationResult } = require('express-validator');
+
+const normalize = require('normalize-url');
 //get the model .. means go up two levels to get model
 const User = require('../../models/User');
 
 //@route  type: POST api/users - POST REQUEST
 //@desc   register user
 //@access Public
-router.post('/', [
-    check('name', 'Name is required')
-        .not()
-        .isEmpty(),
+router.post('/', 
+    check('name', 'Name is required').notEmpty(),
     check('email', 'Please include a valid email').isEmail(),
     check('password', 'please enter a password with 6 or more characters')
-        .isLength({min: 6})
-],
-async(req, res) => {
-//req.body can only work by initialize the middlewear for the body parser
-    const errors = validationResult(req); 
-    if(!errors.isEmpty()) {
-        return res.status(400).json({errors: errors.array()});
-    }
+        .isLength({min: 6}),
 
-    //pull out some stuff from req.user body
-    const {name, email, password} = req.body;  
-    try {
-    //See if user exists, if exist we send back a error
-    // we don't want multiple emails
-        let user = await User.findOne({ email });
-        if(user) {
-            //so client can get the same type of error
-            return res
-                .status(400)
-                .json({errors: [{ msg: 'User already added' }] });
+    async(req, res) => {
+        //req.body can only work by initialize the middlewear for the body parser
+        const errors = validationResult(req); 
+        if(!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
         }
-    //get gravatar
-    //pass the email to the method and that will get the url 
-    const avatar = gravatar.url(email, {
-        s: '200',
-        r: 'pg',
-        d: 'mm' //404 means not found
-    })
 
-    //cretate the user
-    user = new User({
-        name, 
-        email,
-        avatar,
-        password
-    });
+        //pull out some stuff from req.user body
+        const { name, email, password } = req.body;  
 
-    //encryt password
-    const salt = await bcrypt.genSalt(10);
-    //take this password and hashit
-    user.password = await bcrypt.hash(password, salt);
+        try {
+        //See if user exists, if exist we send back a error
+        // we don't want multiple emails
+            let user = await User.findOne({ email });
+            if(user) {
+                //so client can get the same type of error
+                return res
+                    .status(400)
+                    .json({errors: [{ msg: 'User already added' }] });
+            }
 
-    //save user in the database
-    await user.save();//make a promise
+        //get gravatar -UPDATE deprecated
+        //pass the email to the method and that will get the url 
+        // const avatar = gravatar.url(email, {
+        //     s: '200',
+        //     r: 'pg',
+        //     d: 'mm' //404 means not found
+        // })
 
-    //get payload which includes the user id
-    const payload = {
-        user: {
-            id: user.id //call back for user
-        }
-    }
+        const avatar = `http://res.cloudinary.com/dbwhdmlp8/image/upload/ar_1:1,b_rgb:ffffff,bo_2px_solid_rgb:ffffff,c_fill,g_auto,r_max,w_860/v1/avatar/r2qtwmasa787ahihhyap`
 
-    //sign the token where we pass in the payload and token
-    jwt.sign(
-        payload, 
-        config.get('jwtSecret'),
-        //optional set of options
-        { expiresIn: 360000 },
-        //err and the call back token
-        (err, token) => {
-            if(err) throw err;
-            res.json({ token });
+        //cretate the user
+        user = new User({
+            name, 
+            email,
+            avatar,
+            password
         });
 
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
+        //encryt password
+        const salt = await bcrypt.genSalt(10);
+        //take this password and hashit
+        user.password = await bcrypt.hash(password, salt);
+
+        //save user in the database
+        await user.save();//make a promise
+
+        //get payload which includes the user id
+        const payload = {
+            user: {
+                id: user.id //call back for user
+            }
+        }
+
+        //sign the token where we pass in the payload and token
+        jwt.sign(
+            payload, 
+            config.get('jwtSecret'),
+            //optional set of options
+            { expiresIn: 360000 },
+            //err and the call back token
+            (err, token) => {
+                if(err) throw err;
+                res.json({ token });
+            }
+        );
+
+        } catch (err) {
+            console.error(err.message);
+            res.status(500).send('Server error');
+        }
     }
-});
+);
 
 module.exports = router;
 

@@ -1,91 +1,82 @@
-//handle getting json wen tokens for authetication
 const express = require('express');
 const router = express.Router();
 const auth = require('../../middleware/auth');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const config = require('config');
-//express validator
+const bcrypt = require('bcryptjs');
 const { check, validationResult } = require('express-validator');
 
 const User = require('../../models/User');
 
-//@route  type: GET request api/auth
-//@desc   Test route
-//@access Public
-//whenever we want to use middle ware, we just added it in as the second parameter
-router.get('/', auth, async(req, res) => {
-    try {
-        //req.user came from middleware/auth.jas req.user = decoded.user
-        const user = await User.findById(req.user.id).select('-password');
-        res.json(user);
-    } catch(err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
-    }
+// @route   GET api/auth
+// @desc    test route
+// @access  Public (dont need token)
+router.get('/', auth, async (req, res) => {
+  try {
+    // select user but not its pw info
+    const user = await User.findById(req.user.id).select('-password');
+    res.json(user);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
 });
 
-//@route  type: POST api/auth
-//@desc   Authenticate user & get token
-//@access Public
+// @route   POST api/auth
+// @desc    authenticate user & get token
+// @access  Public (dont need token)
 router.post(
-    '/', 
-    [
-    check('email', 'Please include a valid email').isEmail(),
-    check('password', 'Password is required').exists()
-    ],
-    async(req, res) => {
-        //req.body can only work by initialize the middlewear for the body parser
-        const errors = validationResult(req); 
-        if(!errors.isEmpty()) {
-            return res.status(400).json({errors: errors.array()});
+  '/',
+  check('email', 'Please enter a valid email').isEmail(),
+  check('password', 'Password is required').exists(),
+  async (req, res) => {
+    // console.log(req.body)
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      // if there a any errors
+      // 400 bad request
+      return res.status(400).json({ errors: errors.array() });
     }
 
-    //pull out some stuff from req.user body
-    const {email, password} = req.body;  
+    const { email, password } = req.body;
+
     try {
-    //See if user exists, if exist we send back a error
-    // we don't want multiple emails
-        let user = await User.findOne({ email });
-        if(!user) {
-            //so client can get the same type of error
-            return res
-                .status(400)
-                .json({errors: [{ msg: 'Invalid credentials' }] });
-        }
-    
-        const isMatch = await bcrypt.compare(password, user.password);
+      // see if user exists in db
+      let user = await User.findOne({ email });
+      if (!user) {
+        return res
+          .status(400)
+          .json({ errors: [{ msg: 'Invalid Credentials' }] });
+      }
 
-        if (!isMatch) {
-            return res
-                .status(400)
-                .json({errors: [{ msg: 'Invalid Credentials'}]});
-        }
+      // make sure the user's password matched
+      const isMatch = await bcrypt.compare(password, user.password);
 
-        //get payload which includes the user id
-        const payload = {
+      if (!isMatch) {
+        return res
+          .status(400)
+          .json({ errors: [{ msg: 'Invalid Credentials' }] });
+      }
+
+      const payload = {
         user: {
-            id: user.id //call back for user
-        }
-    }
+          id: user.id,
+        },
+      };
 
-    //sign the token where we pass in the payload and token
-    jwt.sign(
-        payload, 
+      jwt.sign(
+        payload,
         config.get('jwtSecret'),
-        //optional set of options
-        { expiresIn: 360000 },
-        //err and the call back sending in token
+        { expiresIn: '5 days' },
         (err, token) => {
-            if(err) throw err;
-            res.json({ token });
-        });
-
+          if (err) throw err;
+          res.json({ token });
+        }
+      );
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
+      console.error(err.message);
+      res.status(500).send('Server Error');
     }
-});
-
-
+  }
+);
 module.exports = router;

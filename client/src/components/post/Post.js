@@ -14,23 +14,21 @@ const Post = ({ getPost, post: { post, loading } }) => {
     getPost(id);
   }, [getPost, id]);
 
-  //if loading is true or posts is null we want to show the spinner
   return loading || post === null ? (
     <Spinner />
   ) : (
     <section className='container'>
-       { /* button  to go back */}
       <Link to='/posts' className='btn'>
         Back to Posts
       </Link>
-      {/* use post item, dont show buttons only show the post itself */}
+      {/* use post item, dont show buttons  */}
       <PostItem post={post} showActions={false} />
       <CommentForm postId={post._id} />
-        <div className='comments'>
-            {post.comments.map((comment) => (
-            <CommentItem key={comment._id} comment={comment} postId={post._id} />
-            ))}
-        </div>
+      <div className='comments'>
+        {post.comments.map((comment) => (
+          <CommentItem key={comment._id} comment={comment} postId={post._id} />
+        ))}
+      </div>
     </section>
   );
 };

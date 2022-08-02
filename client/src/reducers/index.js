@@ -1,14 +1,14 @@
-import { combineReducers } from "redux";
-import alert from './alert';
-import auth from './auth';
-import profile from './profile';
-import post from './post';
+import { combineReducers } from 'redux';
+import alertReducer from './alertReducer';
+import authReducer from './authReducer';
+import profileReducer from './profileReducer';
+import postReducer from './postReducer';
 
-export default combineReducers({
-    alert,
-    auth,
-    profile,
-    post
+const rootReducer = combineReducers({
+  alert: alertReducer,
+  auth: authReducer,
+  profile: profileReducer,
+  post: postReducer,
 });
 
-//root reducer
+export default rootReducer;

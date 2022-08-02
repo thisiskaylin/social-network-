@@ -8,10 +8,11 @@ import { addLike, removeLike, deletePost } from '../../actions/post';
 const PostItem = ({
   auth,
   addLike,
-  removeLike,
   deletePost,
-  post: { _id, text, name, avatar, user, likes, comments, date },
-  showActions
+  removeLike,
+  // user: {avatar},
+  post: { _id, text, name, avatar, user,likes, comments, date },
+  showActions,
 }) => (
   <div className='post bg-white p-1 my-1'>
     <div>
@@ -47,9 +48,7 @@ const PostItem = ({
               <span className='comment-count'>{comments.length}</span>
             )}
           </Link>
-
           {/* make sure post user and logged in user match, if they do, show delete button */}
-          
           {!auth.loading && user === auth.user._id && (
             <button
               onClick={() => deletePost(_id)}
@@ -65,7 +64,6 @@ const PostItem = ({
   </div>
 );
 
-//want actions to be true by default
 PostItem.defaultProps = {
   showActions: true,
 };
@@ -73,6 +71,7 @@ PostItem.defaultProps = {
 PostItem.propTypes = {
   post: PropTypes.object.isRequired,
   auth: PropTypes.object.isRequired,
+  // user:PropTypes.object.isRequired,
   addLike: PropTypes.func.isRequired,
   removeLike: PropTypes.func.isRequired,
   deletePost: PropTypes.func.isRequired,
@@ -86,3 +85,4 @@ const mapStateToProps = (state) => ({
 export default connect(mapStateToProps, { addLike, removeLike, deletePost })(
   PostItem
 );
+
