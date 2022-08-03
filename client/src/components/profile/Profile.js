@@ -1,5 +1,3 @@
-//call the get data by profile id action
-//get the id from the url
 import React, { Fragment, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Link, useParams } from 'react-router-dom';
@@ -86,7 +84,7 @@ Profile.propTypes = {
 
 const mapStateToProps = (state) => ({
   profile: state.profile,
-  auth: state.auth // see if the user is logged in
+  auth: state.auth,
 });
 
 export default connect(mapStateToProps, { getProfileById })(Profile);

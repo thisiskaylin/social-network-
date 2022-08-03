@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux'; //calling action
-import { getGithubRepos } from '../../actions/profile'; //get the action
+import { connect } from 'react-redux';
+import { getGithubRepos } from '../../actions/profile';
 
 const ProfileGithub = ({ username, getGithubRepos, repos }) => {
   useEffect(() => {
@@ -45,7 +45,7 @@ ProfileGithub.propTypes = {
 };
 
 const mapStateToProps = (state) => ({
-  repos: state.profile.repos
+  repos: state.profile.repos,
 });
 
 export default connect(mapStateToProps, { getGithubRepos })(ProfileGithub);

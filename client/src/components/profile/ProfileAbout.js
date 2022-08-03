@@ -1,7 +1,6 @@
 import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
 
-//take out the things we need
 const ProfileAbout = ({
   profile: {
     bio,

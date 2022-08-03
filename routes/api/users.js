@@ -1,7 +1,5 @@
-//registering users and handeling users
 const express = require('express');
 const router = express.Router();
-//express validator
 const { check, validationResult } = require('express-validator');
 const gravatar = require('gravatar');
 const bcrypt = require('bcryptjs');
@@ -9,90 +7,87 @@ const jwt = require('jsonwebtoken');
 const config = require('config');
 
 const normalize = require('normalize-url');
-//get the model .. means go up two levels to get model
+
 const User = require('../../models/User');
 
-//@route  type: POST api/users - POST REQUEST
-//@desc   register user
-//@access Public
-router.post('/', 
-    check('name', 'Name is required').notEmpty(),
-    check('email', 'Please include a valid email').isEmail(),
-    check('password', 'please enter a password with 6 or more characters')
-        .isLength({min: 6}),
-
-    async(req, res) => {
-        //req.body can only work by initialize the middlewear for the body parser
-        const errors = validationResult(req); 
-        if(!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-
-        //pull out some stuff from req.user body
-        const { name, email, password } = req.body;  
-
-        try {
-        //See if user exists, if exist we send back a error
-        // we don't want multiple emails
-            let user = await User.findOne({ email });
-            if(user) {
-                //so client can get the same type of error
-                return res
-                    .status(400)
-                    .json({errors: [{ msg: 'User already added' }] });
-            }
-
-        //get gravatar -UPDATE deprecated
-        //pass the email to the method and that will get the url 
-        // const avatar = gravatar.url(email, {
-        //     s: '200',
-        //     r: 'pg',
-        //     d: 'mm' //404 means not found
-        // })
-
-        const avatar = `http://res.cloudinary.com/dbwhdmlp8/image/upload/ar_1:1,b_rgb:ffffff,bo_2px_solid_rgb:ffffff,c_fill,g_auto,r_max,w_860/v1/avatar/r2qtwmasa787ahihhyap`
-
-        //cretate the user
-        user = new User({
-            name, 
-            email,
-            avatar,
-            password
-        });
-
-        //encryt password
-        const salt = await bcrypt.genSalt(10);
-        //take this password and hashit
-        user.password = await bcrypt.hash(password, salt);
-
-        //save user in the database
-        await user.save();//make a promise
-
-        //get payload which includes the user id
-        const payload = {
-            user: {
-                id: user.id //call back for user
-            }
-        }
-
-        //sign the token where we pass in the payload and token
-        jwt.sign(
-            payload, 
-            config.get('jwtSecret'),
-            //optional set of options
-            { expiresIn: 360000 },
-            //err and the call back token
-            (err, token) => {
-                if(err) throw err;
-                res.json({ token });
-            }
-        );
-
-        } catch (err) {
-            console.error(err.message);
-            res.status(500).send('Server error');
-        }
+// @route   POST api/users
+// @desc    register user
+// @access  Public (dont need token)
+// http://localhost:5100/api/users
+router.post(
+  '/',
+  check('name', 'Name is required').notEmpty(),
+  check('email', 'Please enter a valid email').isEmail(),
+  check(
+    'password',
+    'Please enter a password with 6 or more characters'
+  ).isLength({ min: 6 }),
+  async (req, res) => {
+    // console.log(req.body)
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      // if there a any errors
+      // 400 bad request
+      return res.status(400).json({ errors: errors.array() });
     }
+
+    const { name, email, password } = req.body;
+
+    try {
+      // see if exits exists in db
+      let user = await User.findOne({ email });
+      if (user) {
+        return res
+          .status(400)
+          .json({ errors: [{ msg: 'User already exists' }] });
+      }
+
+      // get users gravatar
+      // default img public id public_id: 'avatar/r2qtwmasa787ahihhyap'
+      // default img tag <img src='http://res.cloudinary.com/dbwhdmlp8/image/upload/ar_1:1,b_rgb:ffffff,bo_2px_solid_rgb:ffffff,c_fill,g_auto,r_max,w_860/v1/avatar/r2qtwmasa787ahihhyap' width='860'/>
+
+      const avatar = `http://res.cloudinary.com/dbwhdmlp8/image/upload/ar_1:1,b_rgb:ffffff,bo_2px_solid_rgb:ffffff,c_fill,g_auto,r_max,w_860/v1/avatar/r2qtwmasa787ahihhyap`
+
+      // creates a new user instance only, not actually saved
+      user = new User({
+        name,
+        email,
+        avatar,
+        // this pw is not hashed
+        password,
+      });
+
+      // encrypt password
+      const salt = await bcrypt.genSalt(10);
+      // update user's password into the hashed password
+      user.password = await bcrypt.hash(password, salt);
+
+      // save the user
+      await user.save();
+
+      // return jsonwebtoken
+      // get user's id
+      const payload = {
+        user: {
+          id: user.id,
+        },
+      };
+
+      jwt.sign(
+        payload,
+        config.get('jwtSecret'),
+        // will have to change exipre time later
+        { expiresIn: '5 days' },
+        (err, token) => {
+          if (err) throw err;
+          res.json({ token });
+        }
+      );
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+    }
+  }
 );
 
 module.exports = router;

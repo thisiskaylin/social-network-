@@ -1,10 +1,7 @@
-//child component of profiles 
-//racfp generate a component
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 
-//distructure from profile
 const ProfileItem = ({
   profile: {
     user: { _id, name, avatar },

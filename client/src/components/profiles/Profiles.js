@@ -8,7 +8,9 @@ import { getProfiles } from '../../actions/profile';
 const Profiles = ({ getProfiles, profile: { profiles, loading } }) => {
   useEffect(() => {
     getProfiles();
-  }, [getProfiles]); //add get profiles as dependency
+  }, [getProfiles]);
+
+  console.log(profiles)
 
   return (
     <section className='container'>
